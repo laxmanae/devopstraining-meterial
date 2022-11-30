@@ -51,10 +51,77 @@ git log --oneline
 git show <commit-hash>
 
 
-
-
-
 3.	Git SCM, Git Branching
+
+creation of branches and listing them
+-------------------------------------
+
+git branch <brnach name>
+
+example: 
+
+git branch dev1
+git branch dev2
+
+list branches
+------------------
+git branch --list
+
+delete branch
+---------------
+git branch --delete <branch-name>
+
+example:
+
+git branch --delete dev1
+
+to delete branch in remote repo
+---------------------------
+git push origin -d <branch name>
+
+example:
+
+git push origin -d dev1
+
+Branch Merge
+----------------
+git merge <branch-name> Note: Be in a branch to where you want to merge other branch
+
+example:
+
+git merge dev1
+
+git pull & push
+-------------
+ git pull <origin-name>
+ 
+ git pull origin  Note: origin is the name of the remote URL which is configured
+ 
+ git push <origin-name>
+ 
+ git push origin 
+ 
+ git fetch <origin-name>
+ 
+ git fetch origin
+ 
+ when you fetch you need to merge those fetched changes manually
+ 
+ git checkout origin/master
+ 
+ check the files or modifications. If the modifications are okay, then go back to the master and merge them manually.
+ 
+ git checkout master
+ 
+ git merge origin/master
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
 4.	Git Merging, Git Tagging
 5.	Git Rebase, Stashing, Squash, Rearranging Commit history
 6.	Branching Strategies
