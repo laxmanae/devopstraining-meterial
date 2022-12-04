@@ -11,6 +11,18 @@ Unlike a centralized version control system, a distributed version control doesn
  git config --global user.name <name>
  git config --global user.email <email id>
  
+ 
+ Add the remote repositories
+ ----------------------------
+ git remote -v
+ git remote add upstream 'URL'
+ 
+ to see more details of a commit
+ ---------------------------------
+ git show <commit ID>
+ 
+ 
+ 
  Initiate the repo from the directory where you are starting your project
  -------------------------------------------------------------------------
 
@@ -33,6 +45,24 @@ Unlike a centralized version control system, a distributed version control doesn
  ------------------------------------
 
  git commit -m "description"
+
+compare the commits, branch changes, staged area changes
+--------------------------------------------------
+
+ git diff
+
+ git diff --staged
+
+ git diff HEAD
+
+ git log -p --follow -- filename 
+
+
+ git log -p --follow -- filename 
+
+ git diff <commit1-sha> <commit2-sha>  
+
+ git diff <branch 1> < branch 2>  
 
  to revert the changes
  ---------------------
@@ -92,7 +122,7 @@ example:
 git merge dev1
 
 git pull & push
--------------
+-------------------
  git pull <origin-name>
  
  git pull origin  Note: origin is the name of the remote URL which is configured
@@ -115,28 +145,34 @@ git pull & push
  
  git merge origin/master
  
+ git rebase
+ ---------------
+ git rebase <branch name from where you want to rebase>
  
  
  
  
- 
- 
+ ## Miscellaneous instructions
 
-4.	Git Merging, Git Tagging
-5.	Git Rebase, Stashing, Squash, Rearranging Commit history
-6.	Branching Strategies
-7.	SSH Key generation, Cloning Repositories, Git Pull, Push and Fetch
-8.	P4Merge tool. Git Diff
+Rename a file
+```
+git mv <old-file> <new-file>
+git commit -m "Renaming file"
+```
 
-Devops engineer topics
---------------------------
-9.	Download Git and Instal (It is stright forward)
+Removing files (wildcards are also valid)
+```
+git rm <target-file>
+git commit -m "Removed target file"
+```
+
+Removing directories
+```
+git rm -r <folder>
+git commit -m "Removed directory 'folder_of_cats'"
+
+
  
- https://git-scm.com/downloads
-
-10. Azure Repo Administration
-11.	Real time Branching Design patterns
-12.	Understand UseCases for GIT
 
 
 
