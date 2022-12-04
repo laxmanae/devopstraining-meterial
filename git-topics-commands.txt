@@ -149,7 +149,31 @@ git pull & push
  ---------------
  git rebase <branch name from where you want to rebase>
  
- 
+ Stashing
+ ------------
+ stash stores the  staged changes into a packgae and stores in memory, when ever u want to pull remote changes and want to apply the un staged changes you can do this
+ git stash 
+
+Show list of stashes
+--------------------
+git stash list
+
+Now run git status you wont be seeing the untaged changes
+apply your stash packet
+
+git stash pop or you can use the id as well as shown below  ( pop is always latest stash)
+
+git stash apply stash@{0}
+
+-- This may lead to conflicts , resolve conflicts manually
+-- Once the conflict is resolved commit the chhanges
+
+-- Delete the stash packet
+git stash drop stash@{0}
+
+--check whether stash packets are deleted or not
+git stash list
+
  
  
  ## Miscellaneous instructions
