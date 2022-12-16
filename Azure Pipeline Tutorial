@@ -1,0 +1,370 @@
+Azure Pipelines
+---------------
+
+Pipeline Strcture
+-----------------
+Stages
+  Jobs
+    Job
+      Tasks
+
+
+example 1:
+---------
+
+stages:
+- stage: A
+  jobs:
+  - job: A1
+  - job: A2
+
+- stage: B
+  jobs:
+  - job: B1
+  - job: B2
+
+example 2:
+----------
+
+- deployment: string        # instead of job keyword, use deployment keyword
+  pool:
+    name: string
+    demands: string | [ string ]
+  environment: string
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - script: echo Hi!
+example 2:
+----------
+pool:
+  name: myPrivateAgents    # your job runs on an agent in this pool
+  demands: agent.os -equals Windows_NT    # the agent must have this capability to run the job
+steps:
+- script: echo hello world
+
+example 3:
+---------
+pool:
+  name: myPrivateAgents
+  demands:
+  - agent.os -equals Darwin
+  - anotherCapability -equals somethingElse
+steps:
+- script: echo hello world
+
+example 4:
+---------
+jobs:
+- job: Debug
+  steps:
+  - script: echo hello from the Debug build
+- job: Release
+  dependsOn: Debug
+  steps:
+  - script: echo hello from the Release build
+
+example 5:
+---------
+jobs:
+- job: InitialJob
+  steps:
+  - script: echo hello from initial job
+- job: SubsequentA
+  dependsOn: InitialJob
+  steps:
+  - script: echo hello from subsequent A
+- job: SubsequentB
+  dependsOn: InitialJob
+  steps:
+  - script: echo hello from subsequent B
+
+example 6:
+---------
+jobs:
+- job: InitialA
+  steps:
+  - script: echo hello from initial A
+- job: InitialB
+  steps:
+  - script: echo hello from initial B
+- job: Subsequent
+  dependsOn:
+  - InitialA
+  - InitialB
+  steps:
+  - script: echo hello from subsequent
+
+example 7:
+----------
+jobs:
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+  - script: echo hello from Windows
+- job: macOS
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+  - script: echo hello from macOS
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: echo hello from Linuxs
+
+variables:
+-----------------
+# a regular variable
+- name: myvariable
+  value: myvalue
+# a variable group
+- group: myvariablegroup
+# a reference to a variable template
+- template: myvariabletemplate.yml
+
+
+Azure Pipeline Conditions:
+--------------------------
+
+example1:
+--------
+jobs:
+- job: Foos
+
+  steps:
+  - script: echo Hello!
+    condition: always() # this step will always run, even if the pipeline is canceled
+
+- job: Bar
+  dependsOn: Foo
+  condition: failed() # this job will only run if Foo fails
+
+
+
+
+
+
+Workspace
+---------
+Build.SourcesDirectory: is where tasks download the application's source code.
+Build.ArtifactStagingDirectory: is where tasks download artifacts needed for the pipeline or upload artifacts before they are published.
+Build.BinariesDirectory: is where tasks write their outputs.
+Common.TestResultsDirectory: is where tasks upload their test results.
+
+
+triggers: Use triggers to run a pipeline automatically. there are two types of triggers
+    1) event based trigger
+    2) schedule trigger
+
+Different ways to set triggers
+UI trigger
+YAML trigger
+
+
+examples: 
+
+    # A pipeline with no CI trigger
+    trigger: none
+
+   # trigger it from the specified branch
+    trigger:
+    - master
+    - releases/*
+
+
+    # specific branch build with include and exclude
+    trigger:
+    branches:
+        include:
+        - master
+        - releases/*
+        exclude:
+        - releases/old*
+
+    # 
+    trigger:
+    branches:
+        include:
+        - refs/tags/{tagname}
+        exclude:
+        - refs/tags/{othertagname}
+
+
+    # specific branch build with batching
+    trigger:
+    batch: true
+    branches:
+        include:
+        - master
+
+
+    # specific path build
+    trigger:
+    branches:
+        include:
+        - master
+        - releases/*
+    paths:
+        include:
+        - docs
+        exclude:
+        - docs/README.md
+
+    # specific tag
+    trigger:
+    tags:
+        include:
+        - v2.*
+        exclude:
+        - v2.0
+
+Scheduled based trigger
+-------------------------
+
+schedules:
+- cron: string # cron syntax defining a schedule
+  displayName: string # friendly name given to a specific schedule
+  branches:
+    include: [ string ] # which branches the schedule applies to
+    exclude: [ string ] # which branches to exclude from the schedule
+  always: boolean # whether to always run the pipeline or only if there have been source code changes since the last successful scheduled run. The default is false.
+
+example 1:
+---------
+
+# YAML file in the main branch
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - main
+
+example 2:
+------------
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - main
+    - releases/*
+    exclude:
+    - releases/ancient/*
+
+example 3:
+-----------
+
+- cron: "0 12 * * 0"
+  displayName: Weekly Sunday build
+  branches:
+    include:
+    - releases/*
+  always: true
+
+cron schedule
+-------------
+mm HH DD MM DW
+ \  \  \  \  \__ Days of week
+  \  \  \  \____ Months
+   \  \  \______ Days
+    \  \________ Hours
+     \__________ Minutes
+     
+     
+Sample Java Build Pipelines
+---------------------------
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-18.04
+  demands: maven
+
+steps:
+- task: Maven@3
+  displayName: 'Build maven project'
+
+- task: CopyFiles@2
+  inputs:
+    Contents: |
+      **/*.war
+      *.sql
+    TargetFolder: '$(Build.BinariesDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.BinariesDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+
+
+Smple dotnet Pipelines
+----------------------
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Install .NET Core SDK'
+  inputs:
+    version: 6.x
+    performMultiLevelLookup: true
+    includePreviewVersions: true # Required for preview versions
+
+#Restore packages with the .NET Core CLI task
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+    includeNuGetOrg: true
+# Build multiple projects
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: |
+      **/*.csproj 
+
+# Run tests and auto publish test results.
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
+  inputs:
+    command: 'test'
+    arguments: '--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura'
+    publishTestResults: true
+
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage report'
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+    
+# Publish projects to specified folder.
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    arguments: '-o $(Build.ArtifactStagingDirectory)/Output'
+    zipAfterPublish: true
+    modifyOutputPath: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
+    ArtifactName: 'Dotnet-Binary'
+    publishLocation: 'Container'
