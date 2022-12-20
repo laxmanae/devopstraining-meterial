@@ -368,3 +368,182 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
     ArtifactName: 'Dotnet-Binary'
     publishLocation: 'Container'
+
+CI/CD azure pipeline for dotnet project
+--------------------------------------
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: 'buildproject'
+  jobs:
+  - job: 'buildproject'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        version: 6.x
+        performMultiLevelLookup: true
+        includePreviewVersions: true # Required for preview versions
+
+    #Restore packages with the .NET Core CLI task
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet restore'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+        includeNuGetOrg: true
+
+    # Build multiple projects
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: |
+          **/*.csproj 
+
+    # Run tests and auto publish test results.
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet test'
+      inputs:
+        command: 'test'
+        arguments: '--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura'
+        publishTestResults: true
+
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish code coverage report'
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+        
+    # Publish projects to specified folder.
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet publish'
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: '**/*.csproj'
+        arguments: '-o $(Build.ArtifactStagingDirectory)/Output'
+        zipAfterPublish: true
+        modifyOutputPath: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output/Blogifier.zip'
+        ArtifactName: 'Dotnet-Binary'
+        publishLocation: 'Container'
+
+- stage: 'deploytodev'
+  jobs:
+  - job: 'deploytodev'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Dotnet-Binary'
+        itemPattern: '**/*.zip'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'sample-webapp-connection'
+        appType: 'webApp'
+        WebAppName: 'sample-webapp-service-dev'
+        packageForLinux: '$(System.ArtifactsDirectory)/Dotnet-Binary/Blogifier.zip'
+
+- stage: 'deploytotest'
+  jobs:
+  - job: 'deploytotest'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Dotnet-Binary'
+        itemPattern: '**/*.zip'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'sample-webapp-connection'
+        appType: 'webApp'
+        WebAppName: 'sample-webapp-service-test'
+        packageForLinux: '$(System.ArtifactsDirectory)/Dotnet-Binary/Blogifier.zip'
+
+- stage: 'deploytouat'
+  jobs:
+  - job: waitForTestersApproval
+    displayName: Wait for external validation  
+    pool: server    
+    timeoutInMinutes: 4320 # job times out in 3 days
+    steps:   
+    - task: ManualValidation@0
+      timeoutInMinutes: 1440 # task times out in 1 day
+      inputs:
+          notifyUsers: |
+              laxmana.ekabattula@example.com
+          instructions: 'Please validate the build configuration and resume'
+          onTimeout: 'resume'
+  - job: 'deploytouat'
+    dependsOn: 'waitForTestersApproval'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Dotnet-Binary'
+        itemPattern: '**/*.zip'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'sample-webapp-connection'
+        appType: 'webApp'
+        WebAppName: 'sample-webapp-service-uat'
+        packageForLinux: '$(System.ArtifactsDirectory)/Dotnet-Binary/Blogifier.zip'
+
+- stage: 'deploytopreprod'
+  jobs:
+  - job: 'deploytodev'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Dotnet-Binary'
+        itemPattern: '**/*.zip'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'sample-webapp-connection'
+        appType: 'webApp'
+        WebAppName: 'sample-webapp-service-preprod'
+        packageForLinux: '$(System.ArtifactsDirectory)/Dotnet-Binary/Blogifier.zip'
+
+- stage: 'deploytoprod'
+  jobs:
+  - job: 'deploytoprod'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Dotnet-Binary'
+        itemPattern: '**/*.zip'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'sample-webapp-connection'
+        appType: 'webApp'
+        WebAppName: 'sample-webapp-service-prod'
+        packageForLinux: '$(System.ArtifactsDirectory)/Dotnet-Binary/Blogifier.zip'
+
