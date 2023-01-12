@@ -1,0 +1,397 @@
+
+Docker Install on Cent OS:
+****************
+sudo yum install -y docker
+check status: sudo systemctl status docker.service
+start service: sudo systemctl start docker.service
+check version: docker version
+ls /var/lib/docker/containers/  ( you can find each container directory and the data available in container)
+docker run -it centos /bin/bash)
+ls /var/lib/docker/containers/  ( you can find each container directory and the data available in container)
+docker start bf5808d5971a   	( starting the existing container)
+docker attach bf5808d5971a
+
+sudo alternatives --config java
+
+Deploying Static HTML website:
+*******************************
+
+Docker file:
+
+FROM nginx:alpine
+
+COPY . /usr/share/nginx/html
+
+Index.html
+
+<h1>Hello World</h1>
+
+
+Build Docker Image
+---------------------
+
+docker build -t webserver-image:v1 .
+
+docker images
+
+docker run -d -p 80:80 webserver-image:v1
+
+
+example 2
+-----------
+
+
+FROM nginx:1.11-alpine
+
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
+docker build -t my-nginx-image:latest .
+
+
+
+
+Docker Networks
+*****************
+docker run -p 80:80 --name webhost -d ngnix
+docker port webhost
+docker container inspect --format '{{.NetworkSettings.IPAddress}}' webhost
+
+docker container port <container-name>
+
+
+docker network ls
+docker network --help
+docker network inspect
+docker network create --driver
+docker network create --help
+docker network connect
+docket network disconnect
+docker run -d --name mysql --network my_net mysql
+docket network inspect my_net
+docker network connect <Network_name> <Container_Name>
+docker network disconnect <Network_name> <Container_Name>
+docker container exec -it new_ingnx ping my_ngnix(containers talk each other as both are in the same container)
+
+Note: Brindge network does not have default DNS built in it.to do this.
+--link can be be used to create DNS to bridge.
+
+
+
+Docker Images:
+***************
+
+docker pull dap1995/oracle-database
+docker pull dap1995/oracle-database
+
+docker run -it -p 
+docker run -it -p 8080:8080 -p 1521:1521 -v /my/oracle/data:/u01/app/oracle dap1995/oracle-database bash
+ 
+Image Layers under & Union File systems Images:
+dokcer history nginx:latest
+
+Tagging: We can tag with the existing images and push into docker hub.There wont be change in the image id as well.
+
+docker image ls
+docker iamge tag nginix lak/nginix
+docker login
+username:
+password:
+cat .docker/config.json
+docker image push lak/inginx
+
+docker run -d <imagename>
+docker inspect <containerid>
+docker run -d --name redisHostLak3 -p 8090:6379 redis:latest
+docker run -d --name redisDynamic -p 6379 redis:latest
+docker run -d --name nginxDynamic -p 80 nginx
+
+
+
+
+
+Container Lifetime & Persistent Data
+************************************
+Data volumes and bind mounts are the soloution for the persisten data.
+
+Step 1: mysql latest --- docker pull mysql
+dokcer container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True mysql
+docker inspect mysql
+docekr volume ls
+docker volume inspact <volume_name>
+docker stop mysql
+docker volume ls
+
+dokcer container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v sysql-db:/var/lib/mysql myssql
+docker volume create  ----- to create 
+
+Bind Mounting:
+*************
+
+docker run -d --name ngnix -p 80:80 -v $(pwd):/usr/share/ngnix/html ngnix
+create one more with different port number default ngnix
+docker run -d --name redisMapped -v /opt/docker/data/redis:/data redis
+
+
+
+alternatives --config java
+
+Database upgrade:
+********************
+
+docker run -d --name psotgress1 -v psql:/var/lib/postgresql/data postgres:9.6.1
+
+docker logs -f postgress1
+
+
+Environemnt file passing
+***************************
+
+docker run -it --env-file ./env.list ubuntu bash
+
+
+
+
+
+
+
+Docker File: 
+******************
+docker image build -t customimage .
+t = means tag name given over here.
+If we change anything in the docker file, only modified script is built.
+
+
+FROM ngnix:latest
+WORKDIR /usr/share/ngnix/html
+COPY index.html index.html
+
+
+
+FROM node:7
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+ONBUILD COPY package.json /usr/src/app/
+ONBUILD RUN npm install
+ONBUILD COPY . /usr/src/app
+CMD [ "npm", "start" ]
+
+FROM node:7-onbuild
+EXPOSE 3000
+
+The command to build the image is 
+
+docker build -t my-nodejs-app .
+
+The command to launch the built image is 
+
+docker run -d --name my-running-app -p 3000:3000 my-nodejs-app
+
+
+curl http://docker:3000
+
+
+ 
+cat Dockerfile
+**************
+FROM alpine
+ADD . /app
+COPY cmd.sh /cmd.sh
+CMD ["sh", "-c", "/cmd.sh"]
+
+To see files in docker
+**************
+docker run password ls /app
+
+
+echo passwords.txt >> .dockerignore
+
+docker build -t nopassword .
+
+docker run nopassword ls /app
+
+docker run nopassword ls /app
+
+echo big-temp-file.img >> .dockerignore
+
+docker build -t no-large-file-context .
+
+
+Creatuing with directory
+************************
+
+docker create -v /config --name dataContainer busybox
+
+
+docker cp config.conf dataContainer:/config/
+
+Launchin other container with this mount point.
+**********************
+docker run --volumes-from dataContainer ubuntu ls /config
+
+
+Exporting container
+*******************
+docker export dataContainer > dataContainer.tar
+
+Importing
+***************
+docker import dataContainer.tar
+
+Communicating Containers
+***********************
+
+docker run -d --name redis-server redis
+
+docker run --link redis-server:redis alpine env
+
+docker run --link redis-server:redis alpine cat /etc/hosts
+
+docker run --link redis-server:redis alpine ping -c 1 redis
+
+docker run -d -p 3000:3000 --link redis-server:redis katacoda/redis-node-docker-example
+
+curl docker:3000
+
+
+
+Docker Compose:
+*****************
+configure relationships between containers:
+1) YAML file -- this file can be used with compose.
+
+
+docker-compose up
+docker-compose down
+docker-compose ps
+docker-compose top
+docker-compose logs  - to check the logs of compose.
+docker-compose -d up - to run compose in the background.
+
+
+
+
+
+Assignment Writing compose file:
+************
+
+drupal
+
+
+2) CLI tool - to smiplyfy docker file
+
+
+Docker Swarn:
+**************
+docker swarm --help
+docker swarm init
+token=$(docker -H 172.17.0.57:2345 swarm join-token -q worker) && echo $token
+docker swarm join 172.17.0.57:2377 --token $token
+docker network create -d overlay skynet
+docker service create --name http --network laknet --replicas 2 -p 80:80 katacoda/docker-http-server
+
+docker service ls
+docker ps
+curl docker
+docker service ps http
+docker service inspect --pretty http
+docker node ps self
+docker node ps $(docker node ls -q | head -n1)
+docker service scale http=5
+docker ps
+
+Swarm Mode:
+************
+
+docker info
+docker swarm init
+docker node ls
+docker node --help
+docker sworm --help
+docker service --help
+
+Creating Service:
+*****************
+
+docker service create alpine ping 8.8.8.8
+docker service ls
+docker service ps <Name of the service>
+docker container ls
+
+Service Scale up
+****************
+docker service update <Service Name> --replicas 3
+docker service ls
+docker service ps <ServiceName>
+dokcer update --help
+docker container rm -f <Name of the service>
+docker service ps <Name of the service>
+docker service rm
+
+
+Different of ways of deployig nodes:
+*************************************
+
+install virtual machine
+
+docker-machine create node1
+docker machine ssh node1
+
+docker-machine env node1
+
+
+Deploy 3 nodes into swarm clustering:
+**************************************
+
+docker swarm init --advertise-addr <public Address>
+
+docker node ls
+docker node updatels
+
+Add nodes
+
+
+docker node update --role manager node2
+docker swarm join-token manager
+dokcer service create --replicas 3
+
+docker service create --replicas 3 alpine ping 8.8.8.8
+
+docker service ls
+docekr node ps
+docker node ps node2
+docker service ps <Name of the service>
+
+
+
+Example Deployment Drupal with postgres in swarm overlay network:
+*****************************************************************
+
+docker network create overlay mydrupal
+
+docker service create --name psql --network -e POSTGRESS_PASSWORD=mypass postgres
+
+docker service ls
+
+docker service ps psql
+
+dcoekr contianer logs <containername>
+
+
+docker service create --name drupal --network mydrupal -p 80:80 drupal
+dcoekr service ls
+watch dcoekr service ls
+docekr service ps drupal
+
+
+Notes: why is that responding in all nodes?
+
+Routing Mesh:
+
+docker service create --nmae search --replicas 3 -p 9200:9200 elasticsearch:2
+
+
+
