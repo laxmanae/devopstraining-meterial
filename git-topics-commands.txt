@@ -4,6 +4,11 @@ Version Controlling, Centralized vs Distributed
 
 Unlike a centralized version control system, a distributed version control doesn't have a single point of failure, because developers clone repositories on their distributed version control workstations, creating multiple backup copies.
 
+Download GIT from URL
+--------------------
+https://git-scm.com/download/win
+
+
 Config settings for the repo
 -----------------------------------------------------
  
