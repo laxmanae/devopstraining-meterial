@@ -9,6 +9,16 @@ Download GIT from URL
 https://git-scm.com/download/win
 
 
+Add the ssh key to Github or Azure Repo
+---------------------------------------
+generate the ssh key
+
+ssh-keygen -->  go to .ssh directory path --> cat id_rsa.pub ---> copy the content --> go to settings of github account --> ssh key add --> paste your key and add
+
+Now, you should be able to authenticate with Github
+
+
+
 Config settings for the repo
 -----------------------------------------------------
  
